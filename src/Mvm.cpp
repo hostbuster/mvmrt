@@ -1342,6 +1342,7 @@ mvm::Mvm::interpolate(ofImage &image1, ofImage &image2, std::vector<ofImage> &im
                     setPixelAdd(imageTarget[s], pixel.x, pixel.y, pixel.color);
                 }
             }
+            imageTarget[s].update();
         }
 }
 
