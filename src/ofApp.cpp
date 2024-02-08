@@ -17,7 +17,7 @@ void ofApp::setup(){
     img1.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     img2.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     ofColor backgroundColor = {0,0,0, 255};
-    anim.resize(5);
+    anim.resize(60);
     for (int i=0; i< anim.size(); i++) {
         anim[i].setUseTexture(false);
         anim[i].allocate(width, height, OF_IMAGE_COLOR_ALPHA);
@@ -118,10 +118,13 @@ void ofApp::draw(){
     float x = (ofGetWidth() - anim[0].getWidth()) / 2.0;
     float y = (ofGetHeight() - anim[1].getHeight()) / 2.0;
     
-    // Draw the image at the calculated position
+    // copy animation frame to canvas image
     imgCanvas = anim[animFrame];
+    // required because the source image has the texture switched off ...
     imgCanvas.setUseTexture(true);
+    // ... otherwise it would crash in the interpolation thread
     imgCanvas.update();
+    // Draw the image at the calculated position
     imgCanvas.draw(x, y);
     // anim[animFrame].setUseTexture(false);
     
