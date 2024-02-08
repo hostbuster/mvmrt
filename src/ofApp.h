@@ -49,19 +49,22 @@ public:
     
     // Constructor taking references and values
     ThreadInterpolate(ofImage& _img1, ofImage& _img2, std::vector<ofImage>& _anim, size_t _frames, ofColor _backgroundColor, bool _shuffleStartingPositions)
-        : img1(_img1), img2(_img2), anim(_anim), frames(_frames), backgroundColor(_backgroundColor), shuffleStartingPositions(_shuffleStartingPositions) {}
+        : img1(_img1), img2(_img2), anim(_anim), frames(_frames), backgroundColor(_backgroundColor), shuffleStartingPositions(_shuffleStartingPositions) {
+            fmt::println("TIP constructor()");
+        }
 
     // Setup function to initialize parameters
     void setup(ofImage& _img1, ofImage& _img2, std::vector<ofImage>& _anim, size_t _frames, ofColor _backgroundColor, bool _shuffleStartingPositions) {
         std::lock_guard<std::mutex> lock(mutex);
-        setReady(false);
+        fmt::println("TIP setup()");
+        // setReady(false);
         img1 = _img1;
         img2 = _img2;
         anim = _anim;  // Here, ensure you are using the assignment operator, not initializing the reference
         frames = _frames;
         backgroundColor = _backgroundColor;
         shuffleStartingPositions = _shuffleStartingPositions;
-        setReady(true);
+        // setReady(true);
     }
     
     void threadedFunction() {
@@ -74,19 +77,22 @@ public:
         
     }
     
-    void generateData(ofImage &img1, ofImage img2, std::vector<ofImage> &anim, size_t frames, ofColor backgroundColor, bool shuffleStaringPositions) {
+    void generateData(ofImage &img1, ofImage& img2, std::vector<ofImage> &anim, size_t frames, ofColor backgroundColor, bool shuffleStaringPositions) {
         std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TIP generate start");
         mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, shuffleStaringPositions);
-        
+        fmt::println("TIP generate end");
     }
     
     void setReady(bool ready) {
         std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TIP  setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
         std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TIP  isReady()");
         return dataReady;
     }
     
@@ -118,6 +124,7 @@ public:
 private:
     ofImage img1;
     ofImage img2;
+    ofImage imgCanvas;
     mvm::Mvm mvm;
     std::vector<ofImage> anim;
     uint32_t animFrame;

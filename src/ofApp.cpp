@@ -12,11 +12,14 @@ void ofApp::setup(){
     ofSetFullscreen(true);
     uint32_t width = ofGetWidth();
     uint32_t height = ofGetHeight();
+    img1.setUseTexture(false);
+    img2.setUseTexture(false);
     img1.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     img2.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     ofColor backgroundColor = {0,0,0, 255};
-    anim.resize(60);
+    anim.resize(5);
     for (int i=0; i< anim.size(); i++) {
+        anim[i].setUseTexture(false);
         anim[i].allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     }
     float seed = ofRandom(0, 20);
@@ -37,13 +40,10 @@ void ofApp::setup(){
     tip = new ThreadInterpolate(img1, img2, anim, anim.size(), backgroundColor, false);
     // update animation frames before we draw it - otherwise you won't see a thing
     
-    // prepareAnimation->startThread();
-    // prepareAnimation->waitForThread();
-    /*
-    for (int i=0; i< anim.size(); i++) {
-        anim[i].update();
-    }
-     */
+    tip->startThread();
+    tip->setThreadName("tip");
+    // tip->waitForThread();
+
     
     // starfield
     numStars = 100;
@@ -93,14 +93,15 @@ void ofApp::update(){
             }
             // calculate new animation frames
             // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
+            
             tip->setup(img1, img2, anim, anim.size(), backgroundColor, false);
             // update animation frames before we draw it - otherwise you won't see a thing
-            // prepareAnimation->startThread();
-            // prepareAnimation->waitForThread();
+            tip->startThread();
+            tip->waitForThread();
             
             animFrame = 0;
         }
-    }
+    } // tip->ready
     
     // starfield
     for (auto& star : stars) {
@@ -113,15 +114,16 @@ void ofApp::update(){
 void ofApp::draw(){
     // set background to black
     ofBackground(0);
-    
-    
-    
     // Calculate the position to center the image on the screen
     float x = (ofGetWidth() - anim[0].getWidth()) / 2.0;
     float y = (ofGetHeight() - anim[1].getHeight()) / 2.0;
     
     // Draw the image at the calculated position
-    anim[animFrame].draw(x, y);
+    imgCanvas = anim[animFrame];
+    imgCanvas.setUseTexture(true);
+    imgCanvas.update();
+    imgCanvas.draw(x, y);
+    // anim[animFrame].setUseTexture(false);
     
     // Draw stars with parallax scrolling
     for (int i = 0; i < 3; i++) {

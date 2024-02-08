@@ -1329,6 +1329,8 @@ mvm::Mvm::interpolate(ofImage &image1, ofImage &image2, std::vector<ofImage> &im
             bool sourceIsTarget = false;
             if (s == 0) {
                 // first frame copy content
+                fmt::println("Image 1: {} {}", image1.getWidth(), image1.getHeight());
+                fmt::println("Targetimage: {} {}", imageTarget[s].getWidth(), imageTarget[s].getHeight());
                 imageTarget[s] = image1;
                 sourceIsTarget = true;
             } else if (s == frames - 1) {
@@ -1343,6 +1345,8 @@ mvm::Mvm::interpolate(ofImage &image1, ofImage &image2, std::vector<ofImage> &im
                 }
             }
             imageTarget[s].update();
+            // Sleep for a short duration
+            ofSleepMillis(10);
         }
 }
 
