@@ -34,6 +34,71 @@ public:
     }
 };
 
+class ThreadPattern : public ofThread {
+public:
+    // thread parameters
+    ofImage& image;  // Reference to start frame ofImage
+    float seed;
+    ofColor backgroundColor;
+    bool fillImage;
+
+    // thread management
+    std::mutex mutex;
+    bool dataReady = false;
+    
+    // Constructor taking references and values
+    ThreadPattern(ofImage& _image, float _seed, ofColor _backgroundColor, bool _fillImage)
+        : image(_image), seed(_seed), backgroundColor(_backgroundColor), fillImage(_fillImage) {
+            fmt::println("TPA constructor()");
+        }
+
+    // Setup function to initialize parameters
+    void setup(ofImage& _image, float _seed, ofColor _backgroundColor, bool _fillImage) {
+        std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TPA setup()");
+        // setReady(false);
+        image = _image;
+        seed = _seed;
+        backgroundColor = _backgroundColor;
+        fillImage = _fillImage;
+        // setReady(true);
+    }
+    
+    void threadedFunction() {
+        // Set the flag to signal data readiness
+        setReady(false);
+        // Produce data
+        generateData(image, seed, backgroundColor, fillImage);
+        image.update();
+        // Set the flag to signal data readiness
+        setReady(true);
+        
+    }
+    
+    void generateData(ofImage &image, float seed, ofColor backgroundColor, bool fillImage) {
+        std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TPA generate start");
+        if (fillImage) mvm.fillColor(image, backgroundColor);
+        mvm.walker(image, seed, true);
+        fmt::println("TPA generate end");
+    }
+    
+    void setReady(bool ready) {
+        std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TPA  setReady {}", ready);
+        dataReady = ready;
+    }
+    
+    bool isReady() {
+        std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TPA  isReady()");
+        return dataReady;
+    }
+    
+private:
+    mvm::Mvm mvm;
+};
+
 class ThreadInterpolate : public ofThread {
 public:
     // thread parameters
@@ -130,8 +195,9 @@ private:
     uint32_t animFrame;
     uint32_t animFrameSub;
     
+    ThreadPattern* tpa1;
+    ThreadPattern* tpa2;
     ThreadInterpolate* tip;
-    
     
     // starfield
     int numStars;

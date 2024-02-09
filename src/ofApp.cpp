@@ -24,16 +24,22 @@ void ofApp::setup(){
     }
     float seed = ofRandom(0, 20);
     ofColor color = {0,0,0, 255};
-    mvm.fillColor(img1, color);
-    mvm.walker(img1, seed, true);
-    img1.update();
+    // mvm.fillColor(img1, color);
+    // mvm.walker(img1, seed, true);
+    tpa1 = new ThreadPattern(img1, seed, color, true);
+    tpa1->startThread();
+    // img1.update();
     // set the first animation frame
     anim[0] = img1;
     
     seed = ofRandom(0, 20);
-    mvm.fillColor(img2, color);
-    mvm.walker(img2, seed, true);
-    img2.update();
+    // mvm.fillColor(img2, color);
+    // mvm.walker(img2, seed, true);
+    tpa2 = new ThreadPattern(img2, seed, color, true);
+    tpa2->startThread();
+    tpa1->waitForThread();
+    tpa2->waitForThread();
+    // img2.update();
     color = { 255, 0, 0, 255 };
     ofColor color2 (0,255,0,255);
     // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
