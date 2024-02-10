@@ -16,17 +16,16 @@ void ofApp::setup(){
     img2.setUseTexture(false);
     img1.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     img2.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
-    ofColor backgroundColor = {0,0,0, 255};
     anim.resize(60);
     for (int i=0; i< anim.size(); i++) {
         anim[i].setUseTexture(false);
         anim[i].allocate(width, height, OF_IMAGE_COLOR_ALPHA);
     }
     float seed = ofRandom(0, 20);
-    ofColor color = {0,0,0, 255};
     // mvm.fillColor(img1, color);
     // mvm.walker(img1, seed, true);
-    tpa1 = new ThreadPattern(img1, seed, color, true);
+    tpa1 = new ThreadPattern(img1, seed, colorBackground, true);
+    tpa1->setThreadName("tpa1");
     tpa1->startThread();
     // img1.update();
     // set the first animation frame
@@ -35,15 +34,15 @@ void ofApp::setup(){
     seed = ofRandom(0, 20);
     // mvm.fillColor(img2, color);
     // mvm.walker(img2, seed, true);
-    tpa2 = new ThreadPattern(img2, seed, color, true);
+    tpa2 = new ThreadPattern(img2, seed, colorBackground, true);
+    tpa2->setThreadName("tpa2");
     tpa2->startThread();
     tpa1->waitForThread();
     tpa2->waitForThread();
     // img2.update();
-    color = { 255, 0, 0, 255 };
     ofColor color2 (0,255,0,255);
     // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
-    tip = new ThreadInterpolate(img1, img2, anim, anim.size(), backgroundColor, false);
+    tip = new ThreadInterpolate(img1, img2, anim, anim.size(), colorBackground, false);
     // update animation frames before we draw it - otherwise you won't see a thing
     
     tip->startThread();
@@ -84,23 +83,22 @@ void ofApp::update(){
         
         if (animFrame > anim.size()-1) {
             // calculate next animation
-            ofColor backgroundColor = {0,0,0, 255};
+            
             img1 = anim[anim.size()-1];
             img1.update();
             float seed = ofRandom(0, 20);
-            ofColor color = {0,0,0, 255};
-            mvm.fillColor(img2, color);
+            mvm.fillColor(img2, colorBackground);
             mvm.walker(img2, seed, true);
             img2.update();
             
             // clear previous animation frames
             for (int i=0; i< anim.size(); i++) {
-                mvm.fillColor(anim[i], backgroundColor);
+                mvm.fillColor(anim[i], colorBackground);
             }
             // calculate new animation frames
             // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
             
-            tip->setup(img1, img2, anim, anim.size(), backgroundColor, false);
+            tip->setup(img1, img2, anim, anim.size(), colorBackground, false);
             // update animation frames before we draw it - otherwise you won't see a thing
             tip->startThread();
             tip->waitForThread();

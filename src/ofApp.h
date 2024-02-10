@@ -187,6 +187,8 @@ public:
     void gotMessage(ofMessage msg) override;
     
 private:
+    ofColor colorBackground = {0,0,0, 255};
+    
     ofImage img1;
     ofImage img2;
     ofImage imgCanvas;
@@ -195,11 +197,12 @@ private:
     uint32_t animFrame;
     uint32_t animFrameSub;
     
+    // threads
     ThreadPattern* tpa1;
     ThreadPattern* tpa2;
     ThreadInterpolate* tip;
     
-    // starfield
+    // for starfield animation
     int numStars;
     float speedFactor;
     std::vector<Star> stars;
