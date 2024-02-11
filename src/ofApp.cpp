@@ -10,44 +10,9 @@ void ofApp::setup(){
     ofHideCursor();
     // Set the application to fullscreen
     ofSetFullscreen(true);
-    uint32_t width = ofGetWidth();
-    uint32_t height = ofGetHeight();
-    img1.setUseTexture(false);
-    img2.setUseTexture(false);
-    img1.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
-    img2.allocate(width, height, OF_IMAGE_COLOR_ALPHA);
-    anim.resize(60);
-    for (int i=0; i< anim.size(); i++) {
-        anim[i].setUseTexture(false);
-        anim[i].allocate(width, height, OF_IMAGE_COLOR_ALPHA);
-    }
-    float seed = ofRandom(0, 20);
-    // mvm.fillColor(img1, color);
-    // mvm.walker(img1, seed, true);
-    tpa1 = new ThreadPattern(img1, seed, colorBackground, true);
-    tpa1->setThreadName("tpa1");
-    tpa1->startThread();
-    // img1.update();
-    // set the first animation frame
-    anim[0] = img1;
-    
-    seed = ofRandom(0, 20);
-    // mvm.fillColor(img2, color);
-    // mvm.walker(img2, seed, true);
-    tpa2 = new ThreadPattern(img2, seed, colorBackground, true);
-    tpa2->setThreadName("tpa2");
-    tpa2->startThread();
-    tpa1->waitForThread();
-    tpa2->waitForThread();
-    // img2.update();
-    ofColor color2 (0,255,0,255);
-    // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
-    tip = new ThreadInterpolate(img1, img2, anim, anim.size(), colorBackground, false);
-    // update animation frames before we draw it - otherwise you won't see a thing
-    
-    tip->startThread();
-    tip->setThreadName("tip");
-    // tip->waitForThread();
+    ofColor colorBackground = ofColor(0,0,0,255);
+    tan = new ThreadAnimation(colorBackground, true, false);
+    tan->startThread();
 
     
     // starfield
@@ -62,51 +27,6 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    if (tip->isReady()) {
-        if (animFrame==0) {
-            if (animFrameSub > 60) {
-                animFrame++;
-                animFrameSub=0;
-            } else {
-                animFrameSub++;
-            }
-        } else if (animFrame==anim.size()-1) {
-            if (animFrameSub > 60) {
-                animFrame++;
-                animFrameSub=0;
-            } else {
-                animFrameSub++;
-            }
-        } else {
-            animFrame++;
-        }
-        
-        if (animFrame > anim.size()-1) {
-            // calculate next animation
-            
-            img1 = anim[anim.size()-1];
-            img1.update();
-            float seed = ofRandom(0, 20);
-            mvm.fillColor(img2, colorBackground);
-            mvm.walker(img2, seed, true);
-            img2.update();
-            
-            // clear previous animation frames
-            for (int i=0; i< anim.size(); i++) {
-                mvm.fillColor(anim[i], colorBackground);
-            }
-            // calculate new animation frames
-            // mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, false);
-            
-            tip->setup(img1, img2, anim, anim.size(), colorBackground, false);
-            // update animation frames before we draw it - otherwise you won't see a thing
-            tip->startThread();
-            tip->waitForThread();
-            
-            animFrame = 0;
-        }
-    } // tip->ready
-    
     // starfield
     for (auto& star : stars) {
         star.update(speedFactor);
@@ -119,11 +39,11 @@ void ofApp::draw(){
     // set background to black
     ofBackground(0);
     // Calculate the position to center the image on the screen
-    float x = (ofGetWidth() - anim[0].getWidth()) / 2.0;
-    float y = (ofGetHeight() - anim[1].getHeight()) / 2.0;
+    float x = 0; // (ofGetWidth() ) / 2.0;
+    float y = 0; // (ofGetHeight() ) / 2.0;
     
     // copy animation frame to canvas image
-    imgCanvas = anim[animFrame];
+    tan->getFrame(imgCanvas);
     // required because the source image has the texture switched off ...
     imgCanvas.setUseTexture(true);
     // ... otherwise it would crash in the interpolation thread
@@ -143,9 +63,7 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-    tip->stopThread();  // Stop the background thread when exiting
-    tip->waitForThread(true);  // Wait for the thread to finish before exiting
-    delete tip;
+    
 }
 
 //--------------------------------------------------------------
