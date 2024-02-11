@@ -291,7 +291,9 @@ public:
         if (anim.size() && frames.size()) {
             output = anim[frames[currentFrame % frames.size()]];
         }
-        currentFrame++;
+        // if (this->isReady()) {
+            currentFrame++;
+        
     }
     
     void setReady(bool ready) {
