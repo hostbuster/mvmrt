@@ -67,6 +67,69 @@ void ofApp::update(){
 }
 
 //--------------------------------------------------------------
+void drawThreadStatus(bool isTANReady, bool isTIPReady, size_t mappedFrame) {
+    
+    ofPushStyle();
+    
+#ifdef SHOW_THREADSTATS
+    // Draw the filled rectangle based on the status
+    if (isTANReady) {
+        ofSetColor(ofColor::green);     // Set color to green
+    } else {
+        ofSetColor(ofColor::red);       // Set color to red
+    }
+    ofFill();  // Fill the rectangle
+    ofDrawRectangle(20, 50, 60, 20);    // Draw a rectangle at position (100, 100) with width 200 and height 100
+    
+    // Draw the filled rectangle based on the status
+    if (isTANReady) {
+        ofSetColor(ofColor::green);     // Set color to green
+    } else {
+        ofSetColor(ofColor::red);       // Set color to red
+    }
+    ofFill();  // Fill the rectangle
+    ofDrawRectangle(20, 80, 60, 20);    // Draw a rectangle at position (100, 100) with width 200 and height 100
+#endif
+    
+    // frame index visualization
+    int numRows = 3;
+    int numCols = 60;
+    int rectSize = 10;
+    int borderSize = 1;
+    
+    int padding = ofGetWidth() - (numCols*(rectSize+borderSize)) / 2;
+    // Loop through rows and columns
+    for (int i = 0; i < numRows; ++i) {
+        for (int j = 0; j < numCols; ++j) {
+            int x = j * (rectSize + borderSize) + 390;
+            int y = i * (rectSize + borderSize) + 20;
+            
+            // Set the border color to white
+            ofSetColor(255);
+
+            // Draw the border
+            ofNoFill();
+            ofDrawRectangle(x, y, rectSize + borderSize, rectSize + borderSize);
+
+
+            // Set the interior color based on the filledIndex
+            if ((i * numCols + j) == mappedFrame) {
+                ofSetColor(255); // Solid white for the interior
+            } else {
+                ofSetColor(0);   // Black for the interior
+            }
+
+            // Draw the interior rectangle
+            ofFill();
+            ofDrawRectangle(x + borderSize, y + borderSize, rectSize - borderSize, rectSize - borderSize);
+        }
+    }
+    
+    
+    ofPopStyle();
+}
+
+//--------------------------------------------------------------
 void ofApp::draw(){
     // set background to black
     ofBackground(0);
@@ -75,9 +138,11 @@ void ofApp::draw(){
     float x = 0; // (ofGetWidth() ) / 2.0;
     float y = 0; // (ofGetHeight() ) / 2.0;
     
+    bool isTANReady;
+    bool isTIPReady;
     // copy animation frame to canvas image
-    if (isSetupReady && tan->isReady()) {
-        tan->getFrame(imgCanvas);
+    if (isSetupReady) {
+        tan->getFrame(imgCanvas, isTANReady, isTIPReady);
     }
     
     // required because the source image has the texture switched off ...
@@ -104,8 +169,10 @@ void ofApp::draw(){
         size_t currentFrame;
         tan->getFrameInfo(currentFrame, mappedFrame);
         ofDrawBitmapString("Frame: " + ofToString(currentFrame)+" "+ofToString(mappedFrame), 20, 20);
+        
+        drawThreadStatus(isTANReady, isTIPReady, mappedFrame);
     }
-
+    
     
 }
 

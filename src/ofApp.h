@@ -120,6 +120,12 @@ public:
         colorStart = colorTable[ofRandom(0, colorTable.size()-1)];
         colorEnd = colorTable[ofRandom(0, colorTable.size()-1)];
         colorWhite = ofColor(255, 255, 255);
+        // Load your sound file (replace "collision_sound.wav" with your actual sound file)
+        /*
+        collisionSound.load("16-bit-explosion_120bpm_C_major.wav");
+        collisionSound.setVolume(1.0); // Adjust the volume if needed
+        collisionSound.setMultiPlay(true); // Allow multiple instances of the sound to play simultaneously
+         */
     }
     
     void update(float speedFactor) {
@@ -203,6 +209,7 @@ public:
             // collision - set star to white
             ofColor color = {255, 255, 255, 255};
             ofSetColor(color);
+            // collisionSound.play();
         } else {
             // interpolate Color from 0 to ofGetWidth
             float fraction = px / ofGetWidth();
@@ -226,6 +233,7 @@ private:
     // explosions
     // explosion particle system
     ParticleSystem explosion;
+    ofSoundPlayer collisionSound;
 };
 
 class ThreadPattern : public ofThread {
@@ -382,6 +390,8 @@ public:
     // Setup function to initialize parameters
     void setup() {
         std::lock_guard<std::mutex> lock(mutex);
+
+
         
         fmt::println("TAN setup()");
         
@@ -481,7 +491,7 @@ public:
         }
     }
     
-    void getFrame(ofImage& output) {
+    void getFrame(ofImage& output, bool& isTANReady, bool& isTIPReady) {
         // fmt::println("TAN getFrame - before mutex");
         if (frames.size()) {
             std::lock_guard<std::mutex> lock(mutex);
@@ -502,6 +512,8 @@ public:
                 currentFrame++;
             }
         }
+        isTANReady = this->isReady();
+        isTIPReady = this->isTIPReady();
     }
     
     void getFrameInfo(size_t& _currentFrame, size_t& _mappedFrame) {
@@ -548,6 +560,7 @@ private:
     ThreadPattern* tpa1;
     ThreadPattern* tpa2;
     ThreadInterpolate* tip;
+    
 };
 
 
