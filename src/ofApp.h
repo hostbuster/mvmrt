@@ -3,6 +3,12 @@
 #include "ofMain.h"
 #include "Mvm.hpp"
 
+
+class Config {
+public:
+    bool displayStats = false;
+};
+
 class Particle {
 public:
     ofVec2f position;
@@ -163,12 +169,9 @@ public:
                 // Trigger the explosion by adding particles at the collision position
                 int probability = ofRandom(0,10);
                 if (!probability) {
-                    size_t trailsize = ofRandom (1, 150);
-                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y), existingStar.colorStart, trailsize);
+                    size_t trailsize = 50;
+                    explosion.addParticles(ofRandom(3,5), ofVec2f(newStar.x, newStar.y), existingStar.colorStart, trailsize);
                 }
-                
-
-                
                 return true; // Collision detected
             }
         }
@@ -276,13 +279,13 @@ public:
     
     void setReady(bool ready) {
         std::lock_guard<std::mutex> lock(mutex);
-        fmt::println("TPA  setReady {}", ready);
+        fmt::println("TPA setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
         std::lock_guard<std::mutex> lock(mutex);
-        fmt::println("TPA  isReady()");
+        fmt::println("TPA isReady()");
         return dataReady;
     }
     
@@ -342,13 +345,13 @@ public:
     
     void setReady(bool ready) {
         std::lock_guard<std::mutex> lock(mutex);
-        fmt::println("TIP  setReady {}", ready);
+        fmt::println("TIP setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
         std::lock_guard<std::mutex> lock(mutex);
-        fmt::println("TIP  isReady()");
+        fmt::println("TIP isReady()");
         return dataReady;
     }
     
@@ -379,6 +382,7 @@ public:
     // Setup function to initialize parameters
     void setup() {
         std::lock_guard<std::mutex> lock(mutex);
+        
         fmt::println("TAN setup()");
         
         uint32_t width = ofGetWidth();
@@ -435,6 +439,7 @@ public:
     
     void animate() {
         // calculate next animation
+        fmt::println("animate");
         img1 = anim[anim.size()-1];
         img1.update();
         float seed = ofRandom(0, 20);
@@ -468,7 +473,7 @@ public:
         while (threadRunning) {
             setReady(false);
             // Produce animation
-            this->animate();
+            if (this->isTIPReady()) this->animate();
             // Set the flag to signal data readiness
             setReady(true);
             // Sleep to avoid busy-waiting and reduce CPU usage
@@ -477,23 +482,31 @@ public:
     }
     
     void getFrame(ofImage& output) {
-        std::lock_guard<std::mutex> lock(mutex);
-        fmt::println("TAN getFrame");
-        size_t mappedFrame = currentFrame % frames.size();
-        if (anim.size() && frames.size()) {
-            output = anim[frames[mappedFrame]];
-        }
-        
-        /*
-        if (mappedFrame == frames.size()-1) {
-            if (this->isTIPReady()) {
+        // fmt::println("TAN getFrame - before mutex");
+        if (frames.size()) {
+            std::lock_guard<std::mutex> lock(mutex);
+            size_t mappedFrame = currentFrame % frames.size();
+            // fmt::println("TAN getFrame: {} {}", currentFrame, mappedFrame);
+
+            if (anim.size() && frames.size()) {
+                output = anim[frames[mappedFrame]];
+            }
+            
+            if (mappedFrame == frames.size()-1) {
+                fmt::println("TAN getFrame - mappedFrame == frames.size()-1");
+                while (!this->isTIPReady()) {
+                    ofSleepMillis(30);
+                }
+                currentFrame++;
+            } else {
                 currentFrame++;
             }
-        } else {
-            */
-            currentFrame++;
-
-        
+        }
+    }
+    
+    void getFrameInfo(size_t& _currentFrame, size_t& _mappedFrame) {
+        _currentFrame = currentFrame;
+        if (frames.size()) _mappedFrame = currentFrame % frames.size();
         
     }
     
@@ -510,7 +523,7 @@ public:
     }
     
     bool isTIPReady() {
-        std::lock_guard<std::mutex> lock(mutex);
+        // std::lock_guard<std::mutex> lock(mutex);
         fmt::println("TAN isTIPReady()");
         return tip->isReady();
     }
@@ -560,10 +573,12 @@ public:
     void gotMessage(ofMessage msg) override;
     
 private:
+    // Configuration
+    Config config;
+    
+    bool isSetupReady = false;
     ofColor colorBackground = {0,0,0, 255};
     
-    // ofImage img1;
-    // ofImage img2;
     ThreadAnimation* tan;
     ofImage imgCanvas;
     mvm::Mvm mvm;
@@ -576,6 +591,7 @@ private:
     float speedFactor;
     std::vector<Star> stars;
     
-    
-    
+    // shaders
+    ofShader shader;
+    ofPlanePrimitive plane;
 };

@@ -7,7 +7,7 @@ void ofApp::setup(){
     // set framerate
     ofSetFrameRate(30);
     // Hide the mouse cursor
-    ofHideCursor();
+    // ofHideCursor();
     // Set the application to fullscreen
     ofSetFullscreen(true);
     ofColor colorBackground = ofColor(0,0,0,255);
@@ -35,6 +35,26 @@ void ofApp::setup(){
         stars.push_back(Star(speed, colorTable));
     }
     
+#ifdef USESHADERS
+    // shaders
+    // ofSetCurrentRenderer(ofGLProgrammableRenderer::TYPE);
+    if(ofIsGLProgrammableRenderer()){
+        fmt::println("ofIsGLProgrammableRenderer: TRUE");
+        shader.load("mvm");
+    }else{
+        fmt::println("ofIsGLProgrammableRenderer: FALSE");
+        shader.load("mvm");
+    }
+    
+    int planeWidth = ofGetWidth();
+    int planeHeight = ofGetHeight();
+    int planeGridSize = 20;
+    int planeColums = planeWidth / planeGridSize;
+    int planeRows = planeHeight / planeGridSize;
+    
+    plane.set(planeWidth, planeHeight, planeColums, planeRows, OF_PRIMITIVE_TRIANGLES);
+#endif
+    isSetupReady = true;
 }
 
 //--------------------------------------------------------------
@@ -50,20 +70,23 @@ void ofApp::update(){
 void ofApp::draw(){
     // set background to black
     ofBackground(0);
+    
     // Calculate the position to center the image on the screen
     float x = 0; // (ofGetWidth() ) / 2.0;
     float y = 0; // (ofGetHeight() ) / 2.0;
     
     // copy animation frame to canvas image
-    tan->getFrame(imgCanvas);
+    if (isSetupReady && tan->isReady()) {
+        tan->getFrame(imgCanvas);
+    }
+    
     // required because the source image has the texture switched off ...
     imgCanvas.setUseTexture(true);
     // ... otherwise it would crash in the interpolation thread
     imgCanvas.update();
     // Draw the image at the calculated position
     imgCanvas.draw(x, y);
-    // anim[animFrame].setUseTexture(false);
-    
+        
     // Draw stars with parallax scrolling
     for (int i = 0; i < 3; i++) {
         speedFactor = 1.0 + i * 0.5;  // Adjust parallax scrolling speed
@@ -72,6 +95,17 @@ void ofApp::draw(){
         }
     }
     
+    // stats
+    if (config.displayStats) {
+        // Display the current frame number
+        ofSetColor(255);  // Set text color to white
+        
+        size_t mappedFrame;
+        size_t currentFrame;
+        tan->getFrameInfo(currentFrame, mappedFrame);
+        ofDrawBitmapString("Frame: " + ofToString(currentFrame)+" "+ofToString(mappedFrame), 20, 20);
+    }
+
     
 }
 
@@ -83,6 +117,14 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     
+    switch(key) {
+        case 104:
+            config.displayStats = !config.displayStats;
+            break;
+        default:
+            fmt::println("key: {}", key);
+            break;
+    }
 }
 
 //--------------------------------------------------------------
