@@ -8,11 +8,14 @@ public:
     float x, y, z;
     float speed;
     
-    Star(float _speed) {
+    Star(float _speed, std::vector<ofColor> _colorTable) {
         x = ofRandom(-ofGetWidth(), ofGetWidth());
         y = ofRandom(-ofGetHeight(), ofGetHeight());
         z = ofRandom(ofGetWidth());
         speed = _speed;
+        colorTable = _colorTable;
+        colorStart = colorTable[ofRandom(0, colorTable.size()-1)];
+        colorEnd = colorTable[ofRandom(0, colorTable.size()-1)];
     }
     
     void update(float speedFactor) {
@@ -29,9 +32,19 @@ public:
         float px = ofMap(x / z, 0, 1, 0, ofGetWidth());
         float py = ofMap(y / z, 0, 1, 0, ofGetHeight());
         float size = ofMap(z, 0, ofGetWidth(), 8, 0);
-        
+        // interpolate Color from 0 to ofGetWidth
+        float fraction = px / ofGetWidth();
+        ofColor color = mvm.interpolate(colorStart, colorEnd, fraction);
+        ofPushStyle();
+        ofSetColor(color);
         ofDrawCircle(px, py, size);
+        ofPopStyle();
     }
+private:
+    std::vector<ofColor> colorTable;
+    ofColor colorStart;
+    ofColor colorEnd;
+    mvm::Mvm mvm;
 };
 
 class ThreadPattern : public ofThread {
@@ -288,11 +301,21 @@ public:
     void getFrame(ofImage& output) {
         std::lock_guard<std::mutex> lock(mutex);
         fmt::println("TAN getFrame");
+        size_t mappedFrame = currentFrame % frames.size();
         if (anim.size() && frames.size()) {
-            output = anim[frames[currentFrame % frames.size()]];
+            output = anim[frames[mappedFrame]];
         }
-        // if (this->isReady()) {
+        
+        /*
+        if (mappedFrame == frames.size()-1) {
+            if (this->isTIPReady()) {
+                currentFrame++;
+            }
+        } else {
+            */
             currentFrame++;
+
+        
         
     }
     
@@ -306,6 +329,12 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         fmt::println("TAN isReady()");
         return dataReady;
+    }
+    
+    bool isTIPReady() {
+        std::lock_guard<std::mutex> lock(mutex);
+        fmt::println("TAN isTIPReady()");
+        return tip->isReady();
     }
     
     void stop() {

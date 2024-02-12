@@ -16,11 +16,23 @@ void ofApp::setup(){
 
     
     // starfield
-    numStars = 100;
+    numStars = 1000;
     speedFactor = 1.0;
+    std::vector<ofColor> colorTable(10);
+    colorTable[0] = {144, 41, 27, 255};
+    colorTable[1] = {213, 78, 49, 255};
+    colorTable[2] = {235, 96, 67, 255};
+    colorTable[3] = {39, 89, 84, 255};
+    colorTable[4] = {62, 135, 129, 255};
+    colorTable[5] = {90, 191, 180, 255};
+    colorTable[6] = {243, 63, 51, 255};
+    colorTable[7] = {178, 163, 40, 255};
+    colorTable[8] = {236, 218, 66, 255};
+    colorTable[9] = {255, 255, 255, 255};
     
     for (int i = 0; i < numStars; i++) {
-        stars.push_back(Star(ofRandom(1, 10)));
+        float speed = ofRandom(1, 10);
+        stars.push_back(Star(speed, colorTable));
     }
     
 }
