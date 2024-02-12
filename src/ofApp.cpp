@@ -16,7 +16,7 @@ void ofApp::setup(){
 
     
     // starfield
-    numStars = 1000;
+    numStars = 400;
     speedFactor = 1.0;
     std::vector<ofColor> colorTable(10);
     colorTable[0] = {144, 41, 27, 255};
@@ -68,7 +68,7 @@ void ofApp::draw(){
     for (int i = 0; i < 3; i++) {
         speedFactor = 1.0 + i * 0.5;  // Adjust parallax scrolling speed
         for (auto& star : stars) {
-            star.draw();
+            star.draw(stars);
         }
     }
 }

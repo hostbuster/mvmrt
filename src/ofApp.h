@@ -7,6 +7,11 @@ class Star {
 public:
     float x, y, z;
     float speed;
+    ofColor colorWhite;
+    
+    struct Circle {
+            float x, y, radius;
+        };
     
     Star(float _speed, std::vector<ofColor> _colorTable) {
         x = ofRandom(-ofGetWidth(), ofGetWidth());
@@ -16,6 +21,7 @@ public:
         colorTable = _colorTable;
         colorStart = colorTable[ofRandom(0, colorTable.size()-1)];
         colorEnd = colorTable[ofRandom(0, colorTable.size()-1)];
+        colorWhite = ofColor(255, 255, 255);
     }
     
     void update(float speedFactor) {
@@ -26,6 +32,32 @@ public:
             y = ofRandom(-ofGetHeight(), ofGetHeight());
             z = ofGetWidth();
         }
+    }
+    
+    // Function to check collision between two circles
+    bool checkCollision(float x1, float y1, float r1, float x2, float y2, float r2) {
+        // Calculate the distance between the centers of the circles
+        float distance = ofDist(x1, y1, x2, y2);
+
+        // Check if the distance is less than the sum of the radii
+        return (distance < (r1 + r2));
+    }
+    
+    // Function to check collision with existing stars
+    bool checkCollision(const Circle& newStar, std::vector<Star>& stars) {
+        for (auto& existingStar : stars) {
+            // Calculate the distance between the centers of the circles
+            float distance = ofDist(newStar.x, newStar.y, existingStar.x, existingStar.y);
+
+            // Check if the distance is less than the sum of the radii
+            float radius = ofMap(existingStar.z, 0, ofGetWidth(), 8, 0);
+            if (distance < (newStar.radius + radius)) {
+                // ofColor colorEnd = colorTable[colorTable.size()-1];
+                existingStar.colorEnd = colorWhite;
+                return true; // Collision detected
+            }
+        }
+        return false; // No collision
     }
     
     void draw() {
@@ -40,6 +72,30 @@ public:
         ofDrawCircle(px, py, size);
         ofPopStyle();
     }
+    
+    void draw(std::vector<Star>& stars) {
+        float px = ofMap(x / z, 0, 1, 0, ofGetWidth());
+        float py = ofMap(y / z, 0, 1, 0, ofGetHeight());
+        float size = ofMap(z, 0, ofGetWidth(), 8, 0);
+        
+        ofPushStyle();
+        // check if the the current position does collide with any other star
+        Circle circle = {px, py, size};
+        if (checkCollision(circle, stars)) {
+            // collision - set star to white
+            ofColor color = {255, 255, 255, 255};
+            ofSetColor(color);
+        } else {
+            // interpolate Color from 0 to ofGetWidth
+            float fraction = px / ofGetWidth();
+            ofColor color = mvm.interpolate(colorStart, colorEnd, fraction);
+            ofSetColor(color);
+        };
+        
+        ofDrawCircle(px, py, size);
+        ofPopStyle();
+    }
+    
 private:
     std::vector<ofColor> colorTable;
     ofColor colorStart;
