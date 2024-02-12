@@ -7,27 +7,60 @@ class Particle {
 public:
     ofVec2f position;
     ofVec2f velocity;
+    ofVec2f acceleration;
     float radius;
     float lifespan;
     ofColor color;
+    vector<ofVec2f> trail;
+    size_t trailsize;
 
-    Particle(ofVec2f _position, ofColor _color) {
+
+    Particle(ofVec2f _position, ofColor _color, size_t _trailsize) {
         position = _position;
         velocity = ofVec2f(ofRandom(-5, 5), ofRandom(-5, 5));
+        acceleration = ofVec2f(0, 0.2); // New: Gravity acceleration
         radius = ofRandom(1, 3);
         lifespan = 255.0; // Initial lifespan
         color = _color;
+        trailsize = _trailsize;
     }
 
     void update() {
+        velocity += acceleration; // New: Apply gravity
         position += velocity;
-        lifespan -= 2.0; // Decrease lifespan over time
+        lifespan -= 2.0;
+        
+        // Store the current position for the trail
+        trail.push_back(position);
+
+        // Remove older positions to limit the length of the trail
+        while (trail.size() > trailsize) {
+            trail.erase(trail.begin());
+        }
+
+        // Bounce off the walls (optional)
+        if (position.x < 0 || position.x > ofGetWidth()) {
+           velocity.x *= -0.8;
+        }
+        if (position.y < 0 || position.y > ofGetHeight()) {
+           velocity.y *= -0.8;
+        }
     }
 
     void draw() const {
         ofPushStyle();
         ofSetColor(color, lifespan);
         ofDrawCircle(position, radius);
+
+        // Draw the particle trail
+        ofSetColor(color, trailsize); // Adjust the alpha value for the trail
+        ofNoFill();
+        ofBeginShape();
+        for (const auto& point : trail) {
+            ofVertex(point.x, point.y);
+        }
+        ofEndShape(false);
+        ofFill();
         ofPopStyle();
     }
 
@@ -40,9 +73,9 @@ class ParticleSystem {
 public:
     vector<Particle> particles;
 
-    void addParticles(int num, ofVec2f position, ofColor color) {
+    void addParticles(int num, ofVec2f position, ofColor color, size_t trailsize) {
         for (int i = 0; i < num; i++) {
-            particles.push_back(Particle(position, color));
+            particles.push_back(Particle(position, color, trailsize));
         }
     }
 
@@ -109,11 +142,20 @@ public:
     bool checkCollision(const Circle& newStar, std::vector<Star>& stars) {
         for (auto& existingStar : stars) {
             // Calculate the distance between the centers of the circles
-            float distance = ofDist(newStar.x, newStar.y, existingStar.x, existingStar.y);
+            // float distance = ofDist(newStar.x, newStar.y, existingStar.x, existingStar.y);
+            
+            // Calculate squared distance between the centers of the circles
+            float dx = newStar.x - existingStar.x;
+            float dy = newStar.y - existingStar.y;
+            float squaredDistance = dx * dx + dy * dy;
+
+            // Check if the squared distance is less than the squared sum of the radii
+            float radius = ofMap(existingStar.z, 0, ofGetWidth(), 8, 0);
+            float sumRadii = newStar.radius + radius;
+            float squaredSumRadii = sumRadii * sumRadii;
 
             // Check if the distance is less than the sum of the radii
-            float radius = ofMap(existingStar.z, 0, ofGetWidth(), 8, 0);
-            if (distance < (newStar.radius + radius)) {
+            if (squaredDistance < squaredSumRadii) {
                 // ofColor colorEnd = colorTable[colorTable.size()-1];
                 existingStar.colorEnd = colorWhite;
                 // add explosion
@@ -121,7 +163,8 @@ public:
                 // Trigger the explosion by adding particles at the collision position
                 int probability = ofRandom(0,10);
                 if (!probability) {
-                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y), existingStar.colorStart);
+                    size_t trailsize = ofRandom (1, 150);
+                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y), existingStar.colorStart, trailsize);
                 }
                 
 
