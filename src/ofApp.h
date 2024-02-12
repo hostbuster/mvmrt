@@ -9,12 +9,14 @@ public:
     ofVec2f velocity;
     float radius;
     float lifespan;
+    ofColor color;
 
-    Particle(ofVec2f _position) {
+    Particle(ofVec2f _position, ofColor _color) {
         position = _position;
         velocity = ofVec2f(ofRandom(-5, 5), ofRandom(-5, 5));
         radius = ofRandom(1, 3);
         lifespan = 255.0; // Initial lifespan
+        color = _color;
     }
 
     void update() {
@@ -24,7 +26,7 @@ public:
 
     void draw() const {
         ofPushStyle();
-        ofSetColor(255, lifespan);
+        ofSetColor(color, lifespan);
         ofDrawCircle(position, radius);
         ofPopStyle();
     }
@@ -38,9 +40,9 @@ class ParticleSystem {
 public:
     vector<Particle> particles;
 
-    void addParticles(int num, ofVec2f position) {
+    void addParticles(int num, ofVec2f position, ofColor color) {
         for (int i = 0; i < num; i++) {
-            particles.push_back(Particle(position));
+            particles.push_back(Particle(position, color));
         }
     }
 
@@ -116,10 +118,10 @@ public:
                 existingStar.colorEnd = colorWhite;
                 // add explosion
 
-                // Trigger the explosion by adding particles at the center of the screen
-                int probability = ofRandom(0,5);
+                // Trigger the explosion by adding particles at the collision position
+                int probability = ofRandom(0,10);
                 if (!probability) {
-                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y));
+                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y), existingStar.colorStart);
                 }
                 
 
