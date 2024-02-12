@@ -3,6 +3,63 @@
 #include "ofMain.h"
 #include "Mvm.hpp"
 
+class Particle {
+public:
+    ofVec2f position;
+    ofVec2f velocity;
+    float radius;
+    float lifespan;
+
+    Particle(ofVec2f _position) {
+        position = _position;
+        velocity = ofVec2f(ofRandom(-5, 5), ofRandom(-5, 5));
+        radius = ofRandom(1, 3);
+        lifespan = 255.0; // Initial lifespan
+    }
+
+    void update() {
+        position += velocity;
+        lifespan -= 2.0; // Decrease lifespan over time
+    }
+
+    void draw() const {
+        ofPushStyle();
+        ofSetColor(255, lifespan);
+        ofDrawCircle(position, radius);
+        ofPopStyle();
+    }
+
+    bool isDead() const {
+        return (lifespan < 0);
+    }
+};
+
+class ParticleSystem {
+public:
+    vector<Particle> particles;
+
+    void addParticles(int num, ofVec2f position) {
+        for (int i = 0; i < num; i++) {
+            particles.push_back(Particle(position));
+        }
+    }
+
+    void update() {
+        for (int i = particles.size() - 1; i >= 0; i--) {
+            particles[i].update();
+            if (particles[i].isDead()) {
+                particles.erase(particles.begin() + i); // Remove dead particles
+            }
+        }
+    }
+
+    void draw() {
+        for (const auto& particle : particles) {
+            particle.draw();
+        }
+    }
+};
+
 class Star {
 public:
     float x, y, z;
@@ -32,6 +89,9 @@ public:
             y = ofRandom(-ofGetHeight(), ofGetHeight());
             z = ofGetWidth();
         }
+        
+        // explosion
+        explosion.update();
     }
     
     // Function to check collision between two circles
@@ -54,6 +114,16 @@ public:
             if (distance < (newStar.radius + radius)) {
                 // ofColor colorEnd = colorTable[colorTable.size()-1];
                 existingStar.colorEnd = colorWhite;
+                // add explosion
+
+                // Trigger the explosion by adding particles at the center of the screen
+                int probability = ofRandom(0,5);
+                if (!probability) {
+                    explosion.addParticles(ofRandom(3,7), ofVec2f(newStar.x, newStar.y));
+                }
+                
+
+                
                 return true; // Collision detected
             }
         }
@@ -94,6 +164,9 @@ public:
         
         ofDrawCircle(px, py, size);
         ofPopStyle();
+        
+        // Draw explosions
+        explosion.draw();
     }
     
 private:
@@ -101,6 +174,10 @@ private:
     ofColor colorStart;
     ofColor colorEnd;
     mvm::Mvm mvm;
+    
+    // explosions
+    // explosion particle system
+    ParticleSystem explosion;
 };
 
 class ThreadPattern : public ofThread {
@@ -453,5 +530,7 @@ private:
     int numStars;
     float speedFactor;
     std::vector<Star> stars;
+    
+    
     
 };
