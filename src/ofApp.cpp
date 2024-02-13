@@ -10,6 +10,7 @@ void ofApp::setup(){
     // ofHideCursor();
     // Set the application to fullscreen
     ofSetFullscreen(true);
+    ofDisableAntiAliasing();
     ofColor colorBackground = ofColor(0,0,0,255);
     tan = new ThreadAnimation(colorBackground, true, false);
     tan->startThread();
