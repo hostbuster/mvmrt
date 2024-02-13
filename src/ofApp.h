@@ -19,6 +19,7 @@ public:
     ofColor color;
     vector<ofVec2f> trail;
     size_t trailsize;
+    uint32_t trailOpacity = 50;
 
 
     Particle(ofVec2f _position, ofColor _color, size_t _trailsize) {
@@ -59,7 +60,7 @@ public:
         ofDrawCircle(position, radius);
 
         // Draw the particle trail
-        ofSetColor(color, trailsize); // Adjust the alpha value for the trail
+        ofSetColor(color, trailOpacity); // Adjust the alpha value for the trail
         ofNoFill();
         ofBeginShape();
         for (const auto& point : trail) {
@@ -175,7 +176,7 @@ public:
                 // Trigger the explosion by adding particles at the collision position
                 int probability = ofRandom(0,10);
                 if (!probability) {
-                    size_t trailsize = 50;
+                    size_t trailsize = ofRandom(10,50);
                     explosion.addParticles(ofRandom(3,5), ofVec2f(newStar.x, newStar.y), existingStar.colorStart, trailsize);
                 }
                 return true; // Collision detected
@@ -245,7 +246,7 @@ public:
     bool fillImage;
     
     // thread management
-    std::mutex mutex;
+    std::recursive_mutex mutex;
     bool dataReady = false;
     
     // Constructor taking references and values
@@ -256,7 +257,7 @@ public:
     
     // Setup function to initialize parameters
     void setup(ofImage& _image, float _seed, ofColor _backgroundColor, bool _fillImage) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TPA setup()");
         // setReady(false);
         image = _image;
@@ -278,7 +279,7 @@ public:
     }
     
     void generateData(ofImage &image, float seed, ofColor backgroundColor, bool fillImage) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TPA generate start");
         if (fillImage) mvm.fillColor(image, backgroundColor);
         mvm.walker(image, seed, true);
@@ -286,13 +287,13 @@ public:
     }
     
     void setReady(bool ready) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TPA setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TPA isReady()");
         return dataReady;
     }
@@ -311,7 +312,7 @@ public:
     ofColor backgroundColor;
     bool shuffleStartingPositions;
     //
-    std::mutex mutex;
+    std::recursive_mutex mutex;
     bool dataReady = false;
     
     // Constructor taking references and values
@@ -322,7 +323,7 @@ public:
     
     // Setup function to initialize parameters
     void setup(ofImage& _img1, ofImage& _img2, std::vector<ofImage>& _anim, size_t _frames, ofColor _backgroundColor, bool _shuffleStartingPositions) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TIP setup()");
         // setReady(false);
         img1 = _img1;
@@ -345,20 +346,20 @@ public:
     }
     
     void generateData(ofImage &img1, ofImage& img2, std::vector<ofImage> &anim, size_t frames, ofColor backgroundColor, bool shuffleStaringPositions) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TIP generate start");
         mvm.interpolate(img1, img2, anim, anim.size(), backgroundColor, shuffleStaringPositions);
         fmt::println("TIP generate end");
     }
     
     void setReady(bool ready) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TIP setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TIP isReady()");
         return dataReady;
     }
@@ -377,7 +378,7 @@ public:
     bool shuffleStartingPositions;
     //
     bool threadRunning = true;
-    std::mutex mutex;
+    std::recursive_mutex mutex;
     bool dataReady = false;
     
     // Constructor taking references and values
@@ -389,10 +390,7 @@ public:
     
     // Setup function to initialize parameters
     void setup() {
-        std::lock_guard<std::mutex> lock(mutex);
-
-
-        
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TAN setup()");
         
         uint32_t width = ofGetWidth();
@@ -449,6 +447,7 @@ public:
     
     void animate() {
         // calculate next animation
+        // std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("animate");
         img1 = anim[anim.size()-1];
         img1.update();
@@ -494,7 +493,7 @@ public:
     void getFrame(ofImage& output, bool& isTANReady, bool& isTIPReady) {
         // fmt::println("TAN getFrame - before mutex");
         if (frames.size()) {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard<std::recursive_mutex> lock(mutex);
             size_t mappedFrame = currentFrame % frames.size();
             // fmt::println("TAN getFrame: {} {}", currentFrame, mappedFrame);
 
@@ -523,19 +522,19 @@ public:
     }
     
     void setReady(bool ready) {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TAN setReady {}", ready);
         dataReady = ready;
     }
     
     bool isReady() {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TAN isReady()");
         return dataReady;
     }
     
     bool isTIPReady() {
-        // std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard<std::recursive_mutex> lock(mutex);
         fmt::println("TAN isTIPReady()");
         return tip->isReady();
     }
